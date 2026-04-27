@@ -1,4 +1,6 @@
+from __future__ import annotations
 from pydantic import BaseModel
+from typing import Optional
 
 
 class UserProfile(BaseModel):
@@ -36,7 +38,7 @@ class CarRecommendation(BaseModel):
     reasoning: str
     trade_off: str
     score_breakdown: ScoreBreakdown
-    emi_estimate: int | None = None
+    emi_estimate: Optional[int] = None
 
 
 class RecommendResponse(BaseModel):
