@@ -17,8 +17,7 @@ def load_cars() -> list[dict]:
 
 def calculate_emi(price: int, down_pct: int, tenure_years: int) -> int:
     principal = price * (1 - down_pct / 100)
-    annual_rate = 0.09
-    monthly_rate = annual_rate / 12
+    monthly_rate = 0.09 / 12
     n = tenure_years * 12
     emi = principal * monthly_rate * (1 + monthly_rate) ** n / ((1 + monthly_rate) ** n - 1)
     return int(emi)
@@ -28,61 +27,86 @@ def _stretch_multiplier(stretch: str) -> float:
     return {"none": 1.0, "10pct": 1.1, "20pct": 1.2}.get(stretch, 1.0)
 
 
+def _matches_fuel(car: dict, fuel_pref: str) -> bool:
+    if fuel_pref == "no_pref":
+        return True
+    if fuel_pref == "ev":
+        return car.get("fuel_type") == "ev"
+    if fuel_pref == "cng":
+        return car.get("cng_available", False) or car.get("fuel_type") == "cng"
+    return car.get("fuel_type") == fuel_pref
+
+
+def _matches_brand(car: dict, brand_pref: str) -> bool:
+    if brand_pref == "no_pref":
+        return True
+    brand_map = {
+        "maruti": "maruti suzuki",
+        "hyundai": "hyundai",
+        "tata": "tata",
+        "kia": "kia",
+        "toyota": "toyota",
+        "honda": "honda",
+        "mahindra": "mahindra",
+        "mg": "mg",
+        "volkswagen": "volkswagen",
+        "skoda": "skoda",
+        "renault": "renault",
+        "nissan": "nissan",
+    }
+    preferred = brand_map.get(brand_pref.lower(), brand_pref.lower())
+    return car.get("make", "").lower().startswith(preferred)
+
+
+def _apply_must_haves(car: dict, must_haves: list) -> bool:
+    if "seven_seats" in must_haves and car.get("seating_capacity", 5) < 7:
+        return False
+    if "sunroof" in must_haves and not car.get("sunroof", False):
+        return False
+    if "auto" in must_haves and not car.get("auto_available", False):
+        return False
+    if "adas" in must_haves and not car.get("adas", False):
+        return False
+    if "6_airbags" in must_haves and car.get("airbags", 0) < 6:
+        return False
+    return True
+
+
 def filter_candidates(profile: UserProfile, cars: list[dict]) -> list[dict]:
     max_budget = profile.budget_max * _stretch_multiplier(profile.budget_stretch)
 
-    candidates = []
-    for car in cars:
-        price = car["price_ex_showroom"]
+    def _base_filter(car: dict) -> bool:
+        return car["price_ex_showroom"] <= max_budget
 
-        # Hard budget filter — must be under stretched max
-        if price > max_budget:
-            continue
-
-        # Must-have: 7 seats
-        if "seven_seats" in profile.must_haves and car.get("seating_capacity", 5) < 7:
-            continue
-
-        # Must-have: sunroof
-        if "sunroof" in profile.must_haves and not car.get("sunroof", False):
-            continue
-
-        # Must-have: auto transmission
-        if "auto" in profile.must_haves and not car.get("auto_available", False):
-            continue
-
-        # Must-have: ADAS
-        if "adas" in profile.must_haves and not car.get("adas", False):
-            continue
-
-        # Fuel filter
-        if profile.fuel_preference != "no_pref":
-            if profile.fuel_preference == "ev" and car.get("fuel_type") != "ev":
+    def _try_filter(with_fuel: bool, with_brand: bool, with_must_haves: bool) -> list[dict]:
+        result = []
+        for car in cars:
+            if not _base_filter(car):
                 continue
-            elif profile.fuel_preference == "cng" and not car.get("cng_available", False) and car.get("fuel_type") != "cng":
+            if with_fuel and not _matches_fuel(car, profile.fuel_preference):
                 continue
-            elif profile.fuel_preference in ("petrol", "diesel", "hybrid"):
-                if car.get("fuel_type") != profile.fuel_preference:
-                    continue
-
-        # Brand filter
-        if profile.brand_preference != "no_pref":
-            brand_map = {
-                "maruti": "Maruti Suzuki",
-                "hyundai": "Hyundai",
-                "tata": "Tata",
-                "kia": "Kia",
-                "toyota": "Toyota",
-                "honda": "Honda",
-                "mahindra": "Mahindra",
-                "mg": "MG",
-            }
-            preferred = brand_map.get(profile.brand_preference, profile.brand_preference)
-            if car.get("make", "").lower() != preferred.lower():
+            if with_brand and not _matches_brand(car, profile.brand_preference):
                 continue
+            if with_must_haves and not _apply_must_haves(car, profile.must_haves):
+                continue
+            result.append(car)
+        return result
 
-        candidates.append(car)
+    # Progressive filter relaxation — tightest first, then loosen
+    for fuel, brand, must in [
+        (True, True, True),    # full constraints
+        (True, True, False),   # drop non-critical must-haves
+        (True, False, False),  # drop brand preference
+        (False, False, False), # ignore fuel/brand/must-haves, budget only
+    ]:
+        candidates = _try_filter(fuel, brand, must)
+        if len(candidates) >= 3:
+            break
 
-    # Sort by price desc (give AI most variety across budget range), cap at 20
+    # If still nothing (unlikely with 138 cars), return cheapest available
+    if not candidates:
+        candidates = sorted(cars, key=lambda c: c["price_ex_showroom"])[:10]
+
+    # Sort: spread across price range for AI variety
     candidates.sort(key=lambda c: c["price_ex_showroom"], reverse=True)
     return candidates[:20]

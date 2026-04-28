@@ -1,38 +1,20 @@
 # Python
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-venv/
-.env
-.env.*
-*.env
+*.pyc
+backend/venv/
+backend/.env
 
 # Node / Next.js
-node_modules/
-.next/
-out/
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
 .vercel/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
 
 # OS
 .DS_Store
-Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Claude Code
+.claude/
 
-# Data files (adjust if you want to track these)
-*.csv
-*.json.bak
+# Utility scripts
+backend/data/expand_dataset.py
