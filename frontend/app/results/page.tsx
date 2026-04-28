@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import CarCard from "@/components/results/CarCard";
 import type { RecommendResponse } from "@/lib/types";
 
@@ -15,38 +15,32 @@ function ResultsContent() {
 
   useEffect(() => {
     const raw = params.get("data");
-    if (!raw) {
-      setError("No results found. Please complete the quiz.");
-      return;
-    }
-    try {
-      const decoded = JSON.parse(atob(raw)) as RecommendResponse;
-      setData(decoded);
-    } catch {
-      setError("Could not parse results. Please try again.");
-    }
+    if (!raw) { setError("No results found."); return; }
+    try { setData(JSON.parse(atob(raw)) as RecommendResponse); }
+    catch { setError("Could not parse results. Please try again."); }
   }, [params]);
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-red-400 mb-4">{error}</p>
-        <button
-          onClick={() => router.push("/quiz")}
-          className="glass glass-hover rounded-xl px-6 py-3 text-sm font-medium text-slate-300"
-        >
-          Back to Quiz
-        </button>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: "var(--bg)" }}>
+        <div className="hud-panel p-8 max-w-sm">
+          <p className="data-label mb-4" style={{ color: "var(--red)" }}>⚠ Scan Error</p>
+          <p className="text-sm mb-6" style={{ color: "var(--text-dim)" }}>{error}</p>
+          <button onClick={() => router.push("/quiz")} className="btn-hud btn-hud-primary w-full">
+            Re-initialize Scan
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">Loading your results...</p>
+          <div className="data-value text-2xl font-black animate-blink mb-3">◆</div>
+          <p className="data-label">Loading scan results...</p>
         </div>
       </div>
     );
@@ -55,84 +49,86 @@ function ResultsContent() {
   const [top, ...rest] = data.recommendations;
 
   return (
-    <div className="min-h-screen">
-      {/* Background */}
-      <div className="orb-bg">
-        <div className="orb orb-1" style={{ opacity: 0.06 }} />
-        <div className="orb orb-2" style={{ opacity: 0.06 }} />
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+      <div className="hud-bg" />
+      <div className="animate-scan-line" />
+
+      {/* ── NAV ── */}
+      <div className="relative z-10 border-b px-6 py-4 flex items-center justify-between"
+        style={{ borderColor: "rgba(0,212,255,0.1)" }}>
+        <span className="text-xs font-black glow-cyan tracking-widest">CARMATCH AI</span>
+        <button onClick={() => router.push("/quiz")} className="btn-hud flex items-center gap-2 py-2 px-4 text-xs">
+          <ArrowLeft size={12} /> New Scan
+        </button>
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 py-8">
-        {/* Nav */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🚗</span>
-            <span className="text-base font-semibold text-white">CarMatch AI</span>
-          </div>
-          <button
-            onClick={() => router.push("/quiz")}
-            className="glass glass-hover rounded-xl px-4 py-2 text-sm text-slate-300 flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Start over
-          </button>
-        </div>
 
-        {/* AI Summary banner */}
+        {/* ── AI INSIGHT BANNER ── */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-5 mb-6 border-blue-500/20"
+          className="hud-panel p-5 mb-6"
         >
-          <p className="text-xs text-blue-400 font-medium mb-1">🤖 AI Insight</p>
-          <p className="text-white font-medium">{data.ai_summary}</p>
-          <p className="text-sm text-slate-400 mt-2">{data.profile_insight}</p>
+          <div className="data-label mb-2" style={{ color: "var(--cyan)" }}>◆ AI Insight</div>
+          <p className="font-bold mb-2" style={{ color: "var(--text)", fontSize: "0.95rem" }}>
+            {data.ai_summary}
+          </p>
+          <p className="data-label" style={{ fontSize: "0.68rem", textTransform: "none", letterSpacing: "0.07em" }}>
+            {data.profile_insight}
+          </p>
         </motion.div>
 
-        {/* Results count */}
-        <motion.p
+        {/* ── RESULT COUNT ── */}
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-sm text-slate-500 mb-5"
+          transition={{ delay: 0.15 }}
+          className="flex items-center gap-3 mb-5"
         >
-          {data.recommendations.length} cars matched and scored for your profile
-        </motion.p>
+          <div className="flex-1 hud-bar-track"><div className="hud-bar-fill" style={{ width: "100%" }} /></div>
+          <span className="data-label whitespace-nowrap">
+            {data.recommendations.length} Matches Found
+          </span>
+          <div className="flex-1 hud-bar-track"><div className="hud-bar-fill" style={{ width: "100%" }} /></div>
+        </motion.div>
 
-        {/* Top pick */}
+        {/* ── TOP PICK ── */}
         {top && (
           <div className="mb-6">
             <CarCard rec={top} rank={1} hero delay={0.1} />
           </div>
         )}
 
-        {/* Alternatives */}
+        {/* ── ALTERNATIVES ── */}
         {rest.length > 0 && (
           <div>
-            <h2 className="text-sm font-medium text-slate-400 mb-4">Also worth considering</h2>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="data-label">Also Consider</span>
+              <div className="flex-1 hud-bar-track" style={{ height: 1 }}>
+                <div className="hud-bar-fill" style={{ width: "100%" }} />
+              </div>
+            </div>
             <div className="space-y-4">
               {rest.map((rec, i) => (
-                <CarCard key={rec.car.id} rec={rec} rank={i + 2} delay={0.15 * (i + 1)} />
+                <CarCard key={rec.car.id} rec={rec} rank={i + 2} delay={0.1 + i * 0.1} />
               ))}
             </div>
           </div>
         )}
 
-        {/* Bottom CTA */}
+        {/* ── BOTTOM ── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
+          transition={{ delay: 0.8 }}
           className="text-center mt-10 mb-4"
         >
-          <p className="text-xs text-slate-600 mb-3">
-            Prices are ex-showroom estimates. Always verify on official dealer sites.
+          <p className="data-label mb-4" style={{ fontSize: "0.6rem" }}>
+            Prices are ex-showroom estimates · Verify on official sites
           </p>
-          <button
-            onClick={() => router.push("/quiz")}
-            className="glass glass-hover rounded-xl px-6 py-3 text-sm text-slate-400"
-          >
-            Change my profile → New match
+          <button onClick={() => router.push("/quiz")} className="btn-hud btn-hud-primary">
+            Run New Scan
           </button>
         </motion.div>
       </div>
@@ -143,8 +139,8 @@ function ResultsContent() {
 export default function ResultsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <span className="data-value text-2xl animate-blink">◆</span>
       </div>
     }>
       <ResultsContent />

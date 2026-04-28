@@ -3,28 +3,26 @@
 import { motion } from "framer-motion";
 
 const USE_CASES = [
-  { id: "city_commute", label: "City Commute", emoji: "🏙️", note: "Daily city driving, traffic jams, short trips" },
-  { id: "highway", label: "Highway Cruiser", emoji: "🛣️", note: "Long trips, highway runs, smooth roads" },
-  { id: "mixed", label: "Mixed Use", emoji: "🗺️", note: "City + occasional highway, versatile" },
-  { id: "off_road", label: "Off-Road / Hills", emoji: "⛰️", note: "Rough terrain, hills, adventure trips" },
+  { id: "city_commute", label: "City Commute",    code: "CTY", note: "Daily traffic · Short trips" },
+  { id: "highway",      label: "Highway Cruiser", code: "HWY", note: "Long trips · Smooth roads" },
+  { id: "mixed",        label: "Mixed Use",       code: "MIX", note: "City + occasional highway" },
+  { id: "off_road",     label: "Off-Road",        code: "4WD", note: "Rough terrain · Adventure" },
 ];
 
 const ANNUAL_KMS = [
-  { id: "<10k", label: "<10,000 km", note: "Occasional use" },
-  { id: "10-20k", label: "10–20k km", note: "Average user" },
-  { id: "20-30k", label: "20–30k km", note: "Heavy user" },
-  { id: ">30k", label: ">30,000 km", note: "Very high mileage" },
+  { id: "<10k",   label: "<10K km/yr",    note: "Occasional" },
+  { id: "10-20k", label: "10–20K km/yr",  note: "Average" },
+  { id: "20-30k", label: "20–30K km/yr",  note: "Heavy" },
+  { id: ">30k",   label: ">30K km/yr",    note: "Very high" },
 ];
 
 const PARKING = [
-  { id: "street", label: "Street / Open", emoji: "🛣️" },
-  { id: "covered", label: "Covered / Garage", emoji: "🏠" },
+  { id: "street",  label: "Street / Open" },
+  { id: "covered", label: "Covered / Garage" },
 ];
 
 interface Props {
-  use: string;
-  km: string;
-  parking: string;
+  use: string; km: string; parking: string;
   onUse: (v: string) => void;
   onKm: (v: string) => void;
   onParking: (v: string) => void;
@@ -32,59 +30,59 @@ interface Props {
 
 export default function UseCasePicker({ use, km, parking, onUse, onKm, onParking }: Props) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <div>
-        <p className="text-sm text-slate-400 mb-3 font-medium">Primary use</p>
+        <p className="data-label mb-3">Primary Drive Mode</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {USE_CASES.map((u, i) => (
             <motion.button
               key={u.id}
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
               onClick={() => onUse(u.id)}
-              className={`glass glass-hover rounded-2xl p-4 text-left transition-all ${
-                use === u.id ? "border-blue-500/60 bg-blue-500/10" : ""
-              }`}
+              className={`sel-card p-4 text-left ${use === u.id ? "selected" : ""}`}
             >
-              <div className="text-2xl mb-2">{u.emoji}</div>
-              <div className="text-sm font-semibold text-white">{u.label}</div>
-              <div className="text-xs text-slate-500 mt-0.5">{u.note}</div>
+              <div className="text-lg font-black mb-2 font-mono"
+                style={{ color: use === u.id ? "var(--cyan)" : "rgba(0,212,255,0.35)" }}>
+                {u.code}
+              </div>
+              <div className="text-sm font-bold mb-0.5" style={{ color: "var(--text)" }}>{u.label}</div>
+              <div className="data-label" style={{ fontSize: "0.6rem", textTransform: "none", letterSpacing: "0.07em" }}>
+                {u.note}
+              </div>
             </motion.button>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="text-sm text-slate-400 mb-3 font-medium">Annual kilometres</p>
-        <div className="flex flex-wrap gap-3">
+        <p className="data-label mb-3">Annual Distance</p>
+        <div className="flex flex-wrap gap-2">
           {ANNUAL_KMS.map((k) => (
             <button
               key={k.id}
               onClick={() => onKm(k.id)}
-              className={`glass glass-hover rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
-                km === k.id ? "border-blue-500/60 bg-blue-500/10 text-blue-300" : "text-slate-300"
-              }`}
+              className={`sel-card px-4 py-2.5 flex items-center gap-2 ${km === k.id ? "selected" : ""}`}
+              style={{ clipPath: "polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)" }}
             >
-              {k.label}
-              <span className="ml-1.5 text-xs text-slate-500">{k.note}</span>
+              <span className="text-sm font-bold" style={{ color: "var(--text)" }}>{k.label}</span>
+              <span className="data-label" style={{ fontSize: "0.58rem", textTransform: "none" }}>{k.note}</span>
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="text-sm text-slate-400 mb-3 font-medium">Parking situation</p>
+        <p className="data-label mb-3">Parking Type</p>
         <div className="flex gap-3">
           {PARKING.map((p) => (
             <button
               key={p.id}
               onClick={() => onParking(p.id)}
-              className={`glass glass-hover rounded-xl px-5 py-3 text-sm font-medium flex items-center gap-2 transition-all ${
-                parking === p.id ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-300" : "text-slate-300"
-              }`}
+              className={`sel-card flex-1 px-5 py-3 text-sm font-bold ${parking === p.id ? "selected" : ""}`}
+              style={{ color: parking === p.id ? "var(--cyan)" : "var(--text-dim)" }}
             >
-              <span>{p.emoji}</span>
               {p.label}
             </button>
           ))}
