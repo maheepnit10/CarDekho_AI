@@ -67,7 +67,7 @@ def _apply_must_haves(car: dict, must_haves: list) -> bool:
         return False
     if "adas" in must_haves and not car.get("adas", False):
         return False
-    if "6_airbags" in must_haves and car.get("airbags", 0) < 6:
+    if ("6_airbags" in must_haves or "airbags_6" in must_haves) and car.get("airbags", 0) < 6:
         return False
     return True
 
