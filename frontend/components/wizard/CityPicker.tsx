@@ -3,22 +3,15 @@
 import { motion } from "framer-motion";
 
 const CITIES = [
-  { id: "delhi",     label: "Delhi NCR",   icon: "DL", type: "metro",   note: "Metro · Heavy traffic" },
-  { id: "mumbai",    label: "Mumbai",       icon: "MU", type: "coastal", note: "Coastal · Dense" },
-  { id: "bangalore", label: "Bangalore",    icon: "BL", type: "metro",   note: "Metro · Mixed terrain" },
-  { id: "chennai",   label: "Chennai",      icon: "CH", type: "coastal", note: "Coastal · Hot" },
-  { id: "pune",      label: "Pune",         icon: "PN", type: "hilly",   note: "Hilly · Mixed roads" },
-  { id: "hyderabad", label: "Hyderabad",    icon: "HY", type: "metro",   note: "Metro · Wide roads" },
-  { id: "kolkata",   label: "Kolkata",      icon: "KO", type: "metro",   note: "Metro · Old roads" },
-  { id: "other",     label: "Other City",   icon: "—",  type: "tier2",   note: "Tier-2 / Town" },
+  { id: "delhi", label: "Delhi NCR", emoji: "🏙️", type: "metro", note: "Metro · Heavy traffic" },
+  { id: "mumbai", label: "Mumbai", emoji: "🌊", type: "coastal", note: "Coastal · Dense city" },
+  { id: "bangalore", label: "Bangalore", emoji: "🌿", type: "metro", note: "Metro · Mixed terrain" },
+  { id: "chennai", label: "Chennai", emoji: "☀️", type: "coastal", note: "Coastal · Hot climate" },
+  { id: "pune", label: "Pune", emoji: "⛰️", type: "hilly", note: "Hilly · Mixed roads" },
+  { id: "hyderabad", label: "Hyderabad", emoji: "💎", type: "metro", note: "Metro · Wide roads" },
+  { id: "kolkata", label: "Kolkata", emoji: "🎭", type: "metro", note: "Metro · Old roads" },
+  { id: "other", label: "Other City", emoji: "🗺️", type: "tier2", note: "Tier-2 / Town" },
 ];
-
-const TYPE_COLOR: Record<string, string> = {
-  metro:   "var(--cyan)",
-  coastal: "var(--amber)",
-  hilly:   "var(--green)",
-  tier2:   "rgba(180,220,240,0.5)",
-};
 
 interface Props {
   value: string;
@@ -31,25 +24,19 @@ export default function CityPicker({ value, onSelect }: Props) {
       {CITIES.map((city, i) => (
         <motion.button
           key={city.id}
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
           onClick={() => onSelect(city.id, city.type)}
-          className={`sel-card p-4 text-left ${value === city.id ? "selected" : ""}`}
+          className={`glass glass-hover rounded-2xl p-4 text-left transition-all ${
+            value === city.id
+              ? "border-blue-500/60 bg-blue-500/10 shadow-lg shadow-blue-500/10"
+              : ""
+          }`}
         >
-          <div
-            className="text-xl font-black mb-2"
-            style={{ color: TYPE_COLOR[city.type], fontFamily: "monospace", letterSpacing: "0.05em" }}
-          >
-            {city.icon}
-          </div>
-          <div className="text-sm font-bold mb-0.5" style={{ color: "var(--text)" }}>{city.label}</div>
-          <div className="data-label" style={{ fontSize: "0.6rem", letterSpacing: "0.08em", textTransform: "none" }}>
-            {city.note}
-          </div>
-          {value === city.id && (
-            <div className="mt-2 hud-badge" style={{ fontSize: "0.55rem" }}>SELECTED</div>
-          )}
+          <div className="text-3xl mb-2">{city.emoji}</div>
+          <div className="text-sm font-semibold text-white">{city.label}</div>
+          <div className="text-xs text-slate-500 mt-0.5">{city.note}</div>
         </motion.button>
       ))}
     </div>

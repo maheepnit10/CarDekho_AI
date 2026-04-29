@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import StepIndicator from "@/components/wizard/StepIndicator";
 import CityPicker from "@/components/wizard/CityPicker";
 import FamilyPicker from "@/components/wizard/FamilyPicker";
 import UseCasePicker from "@/components/wizard/UseCasePicker";
@@ -14,12 +15,20 @@ import { getRecommendations } from "@/lib/api";
 import type { UserProfile } from "@/lib/types";
 import { DEFAULT_PROFILE } from "@/lib/types";
 
-const STEPS = [
-  { id: "01", label: "LOCATION", sub: "City & terrain shapes the shortlist" },
-  { id: "02", label: "USAGE", sub: "Daily commute or weekend explorer?" },
-  { id: "03", label: "BUDGET", sub: "Range + loan EMI calculation" },
-  { id: "04", label: "PRIORITIES", sub: "AI weight configuration" },
-  { id: "05", label: "PREFERENCES", sub: "Fuel & brand (optional)" },
+const STEP_TITLES = [
+  "Where do you live?",
+  "How do you drive?",
+  "What's your budget?",
+  "What matters to you?",
+  "Any preferences?",
+];
+
+const STEP_SUBTITLES = [
+  "Your city shapes everything — traffic, terrain, service centers, fuel options.",
+  "Daily commuter or weekend explorer? How you use the car changes the recommendation.",
+  "Set your range. We'll find cars that fit without making you stretch uncomfortably.",
+  "Pick your top 3 priorities. The AI will weight these in scoring every car.",
+  "Optional: fuel type and brand. Leave both as 'no preference' for the widest shortlist.",
 ];
 
 function canProceed(step: number, profile: UserProfile): boolean {
@@ -44,103 +53,69 @@ export default function QuizPage() {
   const update = (patch: Partial<UserProfile>) => setProfile((p) => ({ ...p, ...patch }));
 
   const next = () => {
-    if (step < 4) { setDirection(1); setStep((s) => s + 1); }
-    else submit();
+    if (step < 4) {
+      setDirection(1);
+      setStep((s) => s + 1);
+    } else {
+      submit();
+    }
   };
 
-  const back = () => { setDirection(-1); setStep((s) => s - 1); };
+  const back = () => {
+    setDirection(-1);
+    setStep((s) => s - 1);
+  };
 
   const submit = async () => {
     setLoading(true);
     setError("");
     try {
       const result = await getRecommendations(profile);
-      router.push(`/results?data=${btoa(JSON.stringify(result))}`);
+      const encoded = btoa(JSON.stringify(result));
+      router.push(`/results?data=${encoded}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Scan failed. Please retry.");
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
       setLoading(false);
     }
   };
 
-  const progress = ((step + 1) / 5) * 100;
+  const stepVariants = {
+    enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),
+  };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
-      <div className="hud-bg" />
-      <div className="animate-scan-line" />
-
-      {/* ── TOP BAR ── */}
-      <div className="relative z-10 border-b px-6 py-4 flex items-center justify-between"
-        style={{ borderColor: "rgba(0,212,255,0.1)" }}>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-black glow-cyan tracking-widest">CARMATCH AI</span>
-          <span style={{ color: "rgba(0,212,255,0.3)", fontSize: "0.7rem" }}>|</span>
-          <span className="data-label">Profile Scan</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <span className="data-label">
-            Step <span className="glow-cyan font-black">{step + 1}</span> / 5
-          </span>
-          <div style={{ width: 100 }} className="hud-bar-track">
-            <div className="hud-bar-fill" style={{ width: `${progress}%` }} />
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col">
+      {/* Background */}
+      <div className="orb-bg">
+        <div className="orb orb-1" style={{ opacity: 0.07 }} />
+        <div className="orb orb-2" style={{ opacity: 0.07 }} />
       </div>
 
-      {/* ── STEP RAIL ── */}
-      <div className="relative z-10 border-b px-6 py-3 overflow-x-auto"
-        style={{ borderColor: "rgba(0,212,255,0.06)" }}>
-        <div className="flex items-center gap-0 min-w-max">
-          {STEPS.map((s, i) => (
-            <div key={s.id} className="flex items-center">
-              <div
-                className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-all ${i <= step ? "" : "opacity-30"}`}
-                onClick={() => i < step && setStep(i)}
-              >
-                <div className={`step-dot ${i === step ? "active" : i < step ? "done" : ""}`}>
-                  {i < step ? "✓" : s.id}
-                </div>
-                <div>
-                  <div className="data-label" style={{ fontSize: "0.6rem" }}>{s.label}</div>
-                  {i === step && (
-                    <div className="data-label" style={{ fontSize: "0.58rem", color: "rgba(0,212,255,0.4)", letterSpacing: "0.08em", textTransform: "none" }}>
-                      {s.sub}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div className={`step-line ${i < step ? "done" : ""}`} style={{ width: 32 }} />
-              )}
-            </div>
-          ))}
+      {/* Header */}
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 pt-8 pb-2">
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-xl">🚗</span>
+          <span className="text-base font-semibold text-white">CarMatch AI</span>
         </div>
+        <StepIndicator current={step} />
       </div>
 
-      {/* ── CONTENT ── */}
-      <div className="relative z-10 flex-1 w-full max-w-2xl mx-auto px-6 py-8">
-
-        {/* Step title */}
+      {/* Step content */}
+      <div className="relative z-10 flex-1 w-full max-w-2xl mx-auto px-6">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
             custom={direction}
-            initial={{ x: direction > 0 ? 60 : -60, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: direction > 0 ? -60 : 60, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="data-value text-4xl font-black">{STEPS[step].id}</div>
-              <div>
-                <div className="text-xl font-black tracking-wide" style={{ color: "var(--text)" }}>
-                  {STEPS[step].label}
-                </div>
-                <div className="data-label" style={{ fontSize: "0.68rem", letterSpacing: "0.1em", textTransform: "none" }}>
-                  {STEPS[step].sub}
-                </div>
-              </div>
-            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">{STEP_TITLES[step]}</h2>
+            <p className="text-sm text-slate-400 mb-6 leading-relaxed">{STEP_SUBTITLES[step]}</p>
 
             {step === 0 && (
               <div className="space-y-6">
@@ -150,7 +125,7 @@ export default function QuizPage() {
                 />
                 {profile.city && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <p className="data-label mb-3">Passenger Profile</p>
+                    <p className="text-sm text-slate-400 mb-3 font-medium">Who&apos;s coming along?</p>
                     <FamilyPicker
                       value={profile.family_type}
                       onSelect={(v) => update({ family_type: v })}
@@ -208,39 +183,55 @@ export default function QuizPage() {
           </motion.div>
         </AnimatePresence>
 
+        {/* Error */}
         {error && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="mt-4 hud-panel p-4 hud-panel-amber text-sm"
-            style={{ color: "var(--amber)" }}>
-            ⚠ {error}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 glass rounded-xl p-4 border-red-500/40 text-red-400 text-sm"
+          >
+            ⚠️ {error}
           </motion.div>
         )}
 
-        {/* ── NAV BUTTONS ── */}
-        <div className="flex gap-3 mt-8">
+        {/* Navigation */}
+        <div className="flex gap-3 mt-8 pb-8">
           {step > 0 && (
-            <button onClick={back} className="btn-hud flex items-center gap-2">
-              <ArrowLeft size={14} /> Back
+            <button
+              onClick={back}
+              className="glass glass-hover rounded-xl px-5 py-3 text-slate-300 flex items-center gap-2 text-sm font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
             </button>
           )}
 
           <button
             onClick={next}
             disabled={!canProceed(step, profile) || loading}
-            className={`flex-1 btn-hud flex items-center justify-center gap-2 ${
-              canProceed(step, profile) && !loading ? "btn-hud-primary" : "opacity-30 cursor-not-allowed"
+            className={`flex-1 rounded-xl px-6 py-3 font-semibold flex items-center justify-center gap-2 transition-all text-sm ${
+              canProceed(step, profile) && !loading
+                ? step === 4
+                  ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20"
+                  : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20"
+                : "bg-white/5 text-slate-600 cursor-not-allowed"
             }`}
-            style={step === 4 ? { borderColor: "var(--green)", color: "var(--green)" } : {}}
           >
             {loading ? (
               <>
-                <span className="animate-blink">◆</span>
-                Scanning AI Engine...
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Finding your perfect cars...
               </>
             ) : step === 4 ? (
-              <>Execute Scan <ArrowRight size={14} /></>
+              <>
+                Find My Car ✨
+                <ArrowRight className="w-4 h-4" />
+              </>
             ) : (
-              <>Continue <ArrowRight size={14} /></>
+              <>
+                Continue
+                <ArrowRight className="w-4 h-4" />
+              </>
             )}
           </button>
         </div>

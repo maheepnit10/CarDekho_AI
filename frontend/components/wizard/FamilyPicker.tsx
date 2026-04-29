@@ -3,11 +3,11 @@
 import { motion } from "framer-motion";
 
 const FAMILIES = [
-  { id: "solo",        label: "Solo",         code: "01", note: "Just me" },
-  { id: "couple",      label: "Couple",        code: "02", note: "2 adults" },
-  { id: "young_family",label: "Young Family",  code: "03", note: "Kids <10" },
-  { id: "large_family",label: "Large Family",  code: "04", note: "4+ members" },
-  { id: "joint_family",label: "Joint Family",  code: "06+",note: "6+ members" },
+  { id: "solo", label: "Just Me", emoji: "🧍", note: "Solo rider" },
+  { id: "couple", label: "Couple", emoji: "👫", note: "2 adults" },
+  { id: "young_family", label: "Young Family", emoji: "👨‍👩‍👧", note: "Kids under 10" },
+  { id: "large_family", label: "Large Family", emoji: "👨‍👩‍👧‍👦", note: "4+ members" },
+  { id: "joint_family", label: "Joint Family", emoji: "🏠", note: "6+ members" },
 ];
 
 interface Props {
@@ -25,18 +25,15 @@ export default function FamilyPicker({ value, onSelect }: Props) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: i * 0.06 }}
           onClick={() => onSelect(f.id)}
-          className={`sel-card p-4 flex flex-col items-center gap-2 text-center ${value === f.id ? "selected" : ""}`}
+          className={`glass glass-hover rounded-2xl p-4 flex flex-col items-center gap-2 transition-all ${
+            value === f.id
+              ? "border-emerald-500/60 bg-emerald-500/10 shadow-lg shadow-emerald-500/10"
+              : ""
+          }`}
         >
-          <span
-            className="text-2xl font-black"
-            style={{ color: value === f.id ? "var(--cyan)" : "rgba(0,212,255,0.4)", fontFamily: "monospace" }}
-          >
-            {f.code}
-          </span>
-          <span className="text-xs font-bold" style={{ color: "var(--text)" }}>{f.label}</span>
-          <span className="data-label" style={{ fontSize: "0.58rem", textTransform: "none", letterSpacing: "0.06em" }}>
-            {f.note}
-          </span>
+          <span className="text-3xl">{f.emoji}</span>
+          <span className="text-xs font-semibold text-white">{f.label}</span>
+          <span className="text-xs text-slate-500">{f.note}</span>
         </motion.button>
       ))}
     </div>
