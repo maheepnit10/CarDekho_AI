@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   title: "CarMatch AI — Find Your Perfect Car",
   description:
     "AI-powered car recommendation that understands your city, family, and lifestyle. Go from confused to confident in 5 questions.",
-  verification: {                                                                                                                       
-      google: "vOxSZ_KzlQLNhfwWQ4iXBEZx0ssLigVAjzUEQWf6-H8",
-    },           
+  verification: {
+    google: "vOxSZ_KzlQLNhfwWQ4iXBEZx0ssLigVAjzUEQWf6-H8",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
