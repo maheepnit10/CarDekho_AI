@@ -22,7 +22,12 @@ def startup():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    import os
+    return {
+        "status": "ok",
+        "gemini_key_set": bool(os.getenv("GEMINI_API_KEY")),
+        "groq_key_set": bool(os.getenv("GROQ_API_KEY")),
+    }
 
 
 @app.get("/api/cars/count")
