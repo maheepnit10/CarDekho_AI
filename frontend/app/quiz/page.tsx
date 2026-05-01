@@ -220,7 +220,7 @@ export default function QuizPage() {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Finding your perfect cars...
+                Finding your perfect cars... (may take 30s on first load)
               </>
             ) : step === 4 ? (
               <>
